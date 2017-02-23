@@ -6,9 +6,7 @@ import tempfile
 
 class StringRecorder(object):
 
-    font = 'consolas'
-
-    def __init__(self, max_frames=100000):
+    def __init__(self, font='Courier', max_frames=100000):
         self.tmp_dir = tempfile.mkdtemp()
         self.max_frames = max_frames
         self.__frame_t = 0
