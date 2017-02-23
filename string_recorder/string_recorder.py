@@ -9,6 +9,7 @@ class StringRecorder(object):
     def __init__(self, font='Courier', max_frames=100000):
         self.tmp_dir = tempfile.mkdtemp()
         self.max_frames = max_frames
+        self.font = font
         self.__frame_t = 0
         self.height = -1
         self.width = -1
