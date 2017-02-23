@@ -17,5 +17,5 @@ for i in range(10):
 rec.make_gif('test.gif')
 ```
 
-And you will obtain this:
+And you will obtain this:  
 ![test](test.gif)
