@@ -1,4 +1,6 @@
+import json
 import io
+import os
 import shutil
 import subprocess
 import tempfile
@@ -98,6 +100,24 @@ class StringRecorder(object):
         with subprocess.Popen(command) as proc:
             proc.wait()
             self.reset()
+
+    def make_gif_from_gym_record(self, json_path):
+        """convert OpenAI gym's text based video (i.e. ansi mode) to GIF
+        """
+
+        with open(json_path) as f:
+            record = json.load(f)
+
+        if record['title'] != 'gym VideoRecorder episode':
+            raise RuntimeError(
+                'Only data from TextEncoder of OpenAI gym is supported.')
+
+        for duration, frame in record['stdout']:
+            frame = frame.replace('\u001b[2J\u001b[1;1H', '')
+            frame = frame.replace('\r', '')
+            self.record_frame(frame)
+
+        self.make_gif(json_path.replace('.json', '.gif'))
 
     @property
     def frame_t(self):
