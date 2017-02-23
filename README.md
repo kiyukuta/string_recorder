@@ -2,7 +2,10 @@
 create GIF animation from sequence of `str`s.
 
 ## Requirements
+- FreeType
 - ImageMagick
+
+install FreeType first.
 
 ## Usage
 
