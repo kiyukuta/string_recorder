@@ -1,6 +1,7 @@
 import json
 import io
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -112,9 +113,13 @@ class StringRecorder(object):
             raise RuntimeError(
                 'Only data from TextEncoder of OpenAI gym is supported.')
 
+        reg_color = re.compile('\u001b\[([0-9]+?)m(?P<content>.+)\u001b\[0m')
+
         for duration, frame in record['stdout']:
             frame = frame.replace('\u001b[2J\u001b[1;1H', '')
             frame = frame.replace('\r', '')
+            # TODO: use pango to keep colors
+            frame = reg_color.sub('\g<content>', frame)
             self.record_frame(frame)
 
         self.make_gif(json_path.replace('.json', '.gif'))
