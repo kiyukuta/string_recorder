@@ -67,5 +67,5 @@ for e in range(1):
     rec.make_gif_from_gym_record(out_path)  # <---
 ```
 
-You wilk obtain three GIF in `records` directory (episode0.gif, episode1.gif, and episode2.gif) .
+You wilk obtain three GIF in `records` directory (episode0.gif, episode1.gif, and episode2.gif) .  
 ![episode0](examples/records/episode0.gif)
