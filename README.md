@@ -2,10 +2,11 @@
 create GIF animation from sequence of `str`s.
 
 ## Requirements
+- Pango
 - FreeType
 - ImageMagick
 
-install FreeType first.
+install Pango anf FreeType before ImageMagick.
 
 ## Usage
 
@@ -32,24 +33,33 @@ Note that the record must be recorded with `ansi` mode, i.e.,
 only text-based environment is allowed.
 
 ```python
+import subprocess
+import re
+
 import gym
-from gym.monitering import VideoRecorder
+from gym.monitoring import VideoRecorder
+
 import string_recorder
 
-env = gym.make('some-text-base-envrionment')
-rec = string_recorder.StringRecorder()   #  <---
 
-timestep_limit = env.spec.tags.get(
-        'wrapper_config.TimeLimit.max_episode_step')
+env = gym.make('FrozenLake-v0')
+rec = string_recorder.StringRecorder(font='Consolas')   #  <---
+
+#timestep_limit = env.spec.tags.get(
+#        'wrapper_config.TimeLimit.max_episode_steps')
+timestep_limit = 10
 
 # typical gym loop
-for e in range(3):
+for e in range(1):
     out_path = 'records/episode{}.json'.format(e)
     video = VideoRecorder(env, out_path)
     obs = env.reset()
 
     for t in range(timestep_limit):
-        action = env.sample_action()
+        env.render()
+        subprocess.call('clear', shell=False)
+
+        action = env.action_space.sample()
         obs, reward, done, info = env.step(action)
         video.capture_frame()
 
@@ -58,3 +68,4 @@ for e in range(3):
 ```
 
 You wilk obtain three GIF in `records` directory (episode0.gif, episode1.gif, and episode2.gif) .
+![episode0](records/episode0.gif)
