@@ -7,6 +7,23 @@ import subprocess
 import tempfile
 
 
+colors = ['black', 'red', 'green', 'yellow',
+          'blue', 'magenta', 'cyan', 'white']
+
+reset_code = '\u001b[0m';
+
+
+def colorcode2pango(matchobj):
+    color = matchobj.groupdict()['color']
+    meta = '<span '
+    if color[0] == '3':
+        meta += 'foreground="{}"'.format(colors[int(color[1])])
+    elif color[0] == '4':
+        meta += 'background="{}"'.format(colors[int(color[1])])
+    content = matchobj.groupdict()['content']
+    return '{}>{}</span>'.format(meta, content)
+
+
 class StringRecorder(object):
 
     def __init__(self, font='Courier', max_frames=100000):
@@ -53,7 +70,7 @@ class StringRecorder(object):
         command = ['convert',
                    '-font',
                    '{}'.format(self.font),
-                   'label:{}'.format(output.getvalue()),
+                   'pango:{}'.format(output.getvalue()),
                    record_path]
 
         with subprocess.Popen(command) as proc:
@@ -113,14 +130,15 @@ class StringRecorder(object):
             raise RuntimeError(
                 'Only data from TextEncoder of OpenAI gym is supported.')
 
-        reg_color = re.compile('\u001b\[([0-9]+?)m(?P<content>.+)\u001b\[0m')
+        reg_color = re.compile('\u001b\[(?P<color>[0-9]+?)m(?P<content>.+?)\u001b\[0m')
 
         for duration, frame in record['stdout']:
             frame = frame.replace('\u001b[2J\u001b[1;1H', '')
             frame = frame.replace('\r', '')
             # TODO: use pango to keep colors
-            frame = reg_color.sub('\g<content>', frame)
+            frame = reg_color.sub(colorcode2pango, frame)
             self.record_frame(frame)
+
 
         self.make_gif(json_path.replace('.json', '.gif'))
 
