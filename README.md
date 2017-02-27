@@ -42,7 +42,7 @@ from gym.monitoring import VideoRecorder
 import string_recorder
 
 
-env = gym.make('FrozenLake-v0')
+env = gym.make('Taxi-v2')
 rec = string_recorder.StringRecorder(font='Consolas')   #  <---
 
 #timestep_limit = env.spec.tags.get(
@@ -68,4 +68,5 @@ for e in range(1):
 ```
 
 You wilk obtain three GIF in `records` directory (episode0.gif, episode1.gif, and episode2.gif) .  
+
 ![episode0](examples/records/episode0.gif)

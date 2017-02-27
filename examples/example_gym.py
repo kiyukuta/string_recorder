@@ -7,12 +7,12 @@ from gym.monitoring import VideoRecorder
 import string_recorder
 
 
-env = gym.make('FrozenLake-v0')
+env = gym.make('Taxi-v2')
 rec = string_recorder.StringRecorder(font='Consolas')   #  <---
 
 #timestep_limit = env.spec.tags.get(
 #        'wrapper_config.TimeLimit.max_episode_steps')
-timestep_limit = 10
+timestep_limit = 15
 
 # typical gym loop
 for e in range(3):
