@@ -1,16 +1,18 @@
 # StringRecorder
-create GIF animation from sequence of `str`s.
+create GIF animation from sequence of `str` in python .
+
 
 ## Requirements
 - Pango
 - FreeType
 - ImageMagick
 
-install Pango anf FreeType before ImageMagick.
+install Pango and FreeType before ImageMagick.
+
 
 ## Usage
 
-For example, Run this:
+For example, Run this code:
 ```python
 import string_recorder
 import random
@@ -28,8 +30,8 @@ And you will obtain this GIF:
 
 ### Connecting with OpenAI Gym.
 
-You can also use `string_recorder` with the recrod from OpenAI gym.  
-Note that the record must be recorded with `ansi` mode, i.e., 
+You can also use `string_recorder` for the recrod from OpenAI gym.  
+Note that the record must be done with `ansi` mode, i.e., 
 only text-based environment is allowed.
 
 ```python
@@ -47,10 +49,10 @@ rec = string_recorder.StringRecorder(font='Consolas')   #  <---
 
 #timestep_limit = env.spec.tags.get(
 #        'wrapper_config.TimeLimit.max_episode_steps')
-timestep_limit = 10
+timestep_limit = 15
 
 # typical gym loop
-for e in range(1):
+for e in range(3):
     out_path = 'records/episode{}.json'.format(e)
     video = VideoRecorder(env, out_path)
     obs = env.reset()
@@ -67,6 +69,22 @@ for e in range(1):
     rec.make_gif_from_gym_record(out_path)  # <---
 ```
 
-You wilk obtain three GIF in `records` directory (episode0.gif, episode1.gif, and episode2.gif) .  
+By running above code (`examples/example_gym.py`), 
+you will obtain three GIF in `records` directory
+(episode0.gif, episode1.gif, and episode2.gif) .  
 
 ![episode0](examples/records/episode0.gif)
+
+
+Ofcource, you can directly use `string_recorder` without
+`gym.monitering.VideoRecorder` (like the first example):
+```
+rec = string_recorder.StringRecorder()
+# loop
+for t in range(timestep_limit):
+  frame = env.render(mode='ansi')
+  print(frame)
+  rec.record_frame(frame)
+
+rec.make_gif('gym_without_videorecoder.gif')
+```
