@@ -7,21 +7,44 @@ import subprocess
 import tempfile
 
 
-colors = ['black', 'red', 'green', 'yellow',
-          'blue', 'magenta', 'cyan', 'white']
+colors = ['gray', 'red', 'green', 'yellow',
+          'blue', 'magenta', 'cyan', 'white', 'crimson']
 
 reset_code = '\u001b[0m';
 
 
 def colorcode2pango(matchobj):
-    color = matchobj.groupdict()['color']
-    meta = '<span '
+    reg_nest = re.compile('\u001b\[(?P<color>[0-9]+?)m(?P<content>.+?)')
+
+    color = matchobj.groupdict()['color'].split(';')
+    meta = '<span'
+    bold = False
+    if len(color) != 1:
+        bold = True
+    color = color[0]
     if color[0] == '3':
-        meta += 'foreground="{}"'.format(colors[int(color[1])])
+        meta += ' foreground="{}"'.format(colors[int(color[1])])
     elif color[0] == '4':
-        meta += 'background="{}"'.format(colors[int(color[1])])
+        meta += ' background="{}"'.format(colors[int(color[1])])
+
     content = matchobj.groupdict()['content']
-    return '{}>{}</span>'.format(meta, content)
+    if content.startswith('\u001B'):
+        color, content = reg_nest.findall(content)[0]
+
+        color = color.split(';')
+        if len(color) != 1:
+            bold = True
+        color = color[0]
+
+        if color[0] == '3':
+            meta += ' foreground="{}"'.format(colors[int(color[1])])
+        elif color[0] == '4':
+            meta += ' background="{}"'.format(colors[int(color[1])])
+
+    if bold:
+        content = '<b>{}</b>'.format(content)
+    out = '{}>{}</span>'.format(meta, content)
+    return out
 
 
 class StringRecorder(object):
@@ -130,13 +153,14 @@ class StringRecorder(object):
             raise RuntimeError(
                 'Only data from TextEncoder of OpenAI gym is supported.')
 
-        reg_color = re.compile('\u001b\[(?P<color>[0-9]+?)m(?P<content>.+?)\u001b\[0m')
+        reg_color = re.compile('\u001b\[(?P<color>[0-9;]+?)m(?P<content>.+?)\u001b\[0m')
 
         for duration, frame in record['stdout']:
             frame = frame.replace('\u001b[2J\u001b[1;1H', '')
             frame = frame.replace('\r', '')
             # TODO: use pango to keep colors
             frame = reg_color.sub(colorcode2pango, frame)
+            frame = frame.replace(reset_code, '')
             self.record_frame(frame)
 
 
