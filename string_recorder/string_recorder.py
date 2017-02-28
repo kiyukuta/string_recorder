@@ -1,6 +1,5 @@
-import json
 import io
-import os
+import json
 import re
 import shutil
 import subprocess
@@ -12,7 +11,7 @@ colors = ['gray', 'red', 'green', 'yellow',
           'blue', 'magenta', 'cyan', 'white', 'crimson']
 
 
-reset_code = '\u001b[0m';
+reset_code = '\u001b[0m'
 
 
 def get_font():
@@ -155,6 +154,7 @@ class StringRecorder(object):
 
     def make_gif_from_gym_record(self, json_path):
         """convert OpenAI gym's text based video (i.e. ansi mode) to GIF
+
         """
 
         with open(json_path) as f:
@@ -164,16 +164,15 @@ class StringRecorder(object):
             raise RuntimeError(
                 'Only data from TextEncoder of OpenAI gym is supported.')
 
-        reg_color = re.compile('\u001b\[(?P<color>[0-9;]+?)m(?P<content>.+?)\u001b\[0m')
+        reg_color = re.compile(
+            '\u001b\[(?P<color>[0-9;]+?)m(?P<content>.+?)\u001b\[0m')
 
         for duration, frame in record['stdout']:
             frame = frame.replace('\u001b[2J\u001b[1;1H', '')
             frame = frame.replace('\r', '')
-            # TODO: use pango to keep colors
             frame = reg_color.sub(colorcode2pango, frame)
             frame = frame.replace(reset_code, '')
             self.record_frame(frame)
-
 
         self.make_gif(json_path.replace('.json', '.gif'))
 

@@ -1,5 +1,7 @@
-import string_recorder
 import random
+import string_recorder
+
+
 rec = string_recorder.StringRecorder()
 for i in range(10):
     x = random.randint(0, 5)
