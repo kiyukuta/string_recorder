@@ -8,7 +8,7 @@ import string_recorder
 
 
 env = gym.make('Taxi-v2')
-rec = string_recorder.StringRecorder(font='Consolas')   #  <---
+rec = string_recorder.StringRecorder()  # <---
 
 #timestep_limit = env.spec.tags.get(
 #        'wrapper_config.TimeLimit.max_episode_steps')

@@ -4,13 +4,22 @@ import os
 import re
 import shutil
 import subprocess
+from sys import platform
 import tempfile
 
 
 colors = ['gray', 'red', 'green', 'yellow',
           'blue', 'magenta', 'cyan', 'white', 'crimson']
 
+
 reset_code = '\u001b[0m';
+
+
+def get_font():
+    if platform in ['linux', 'linux2']:
+        return 'Courier'
+    elif platform == "darwin":
+        return 'Consolas'
 
 
 def colorcode2pango(matchobj):
@@ -49,9 +58,11 @@ def colorcode2pango(matchobj):
 
 class StringRecorder(object):
 
-    def __init__(self, font='Courier', max_frames=100000):
+    def __init__(self, font=None, max_frames=100000):
         self.tmp_dir = tempfile.mkdtemp()
         self.max_frames = max_frames
+        if font is None:
+            font = get_font()
         self.font = font
         self.__frame_t = 0
         self.height = -1
