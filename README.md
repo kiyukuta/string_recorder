@@ -22,7 +22,7 @@ if no font is specified in initializer.
 
 ## Usage
 
-For example, Run this code:
+For example, Run this code (examples/example.py):
 ```python
 import string_recorder
 import random
