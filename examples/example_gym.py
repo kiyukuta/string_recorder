@@ -1,5 +1,4 @@
 import subprocess
-import re
 
 import gym
 from gym.monitoring import VideoRecorder
@@ -10,7 +9,7 @@ import string_recorder
 env = gym.make('Taxi-v2')
 rec = string_recorder.StringRecorder()  # <---
 
-#timestep_limit = env.spec.tags.get(
+# timestep_limit = env.spec.tags.get(
 #        'wrapper_config.TimeLimit.max_episode_steps')
 timestep_limit = 15
 
