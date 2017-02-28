@@ -4,7 +4,7 @@ import os
 import re
 import shutil
 import subprocess
-from sys import platform
+import sys
 import tempfile
 
 
@@ -16,9 +16,9 @@ reset_code = '\u001b[0m';
 
 
 def get_font():
-    if platform in ['linux', 'linux2']:
+    if sys.platform in ['linux', 'linux2']:
         return 'Courier'
-    elif platform == "darwin":
+    elif sys.platform == "darwin":
         return 'Consolas'
 
 
