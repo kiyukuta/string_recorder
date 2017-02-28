@@ -10,6 +10,16 @@ create GIF animation from sequence of `str` in python .
 install Pango and FreeType before ImageMagick.
 
 
+## About font
+
+To make good GIF, we have to specify monospaced font in initializer
+(`StringReorder.__init__`).
+
+I found **Courier** for Linux and **Consolas** for Mac are monospaced.
+`StringRecorder` will use one of these fonts (according to your OS)
+if no font is specified in initializer.
+
+
 ## Usage
 
 For example, Run this code:
