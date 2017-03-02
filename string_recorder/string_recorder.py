@@ -125,7 +125,14 @@ class StringRecorder(object):
     def make_gif(self, save_path, speed=0.3):
         if not save_path.endswith('.gif'):
             save_path += '.gif'
-        images = [numpy.asarray(img) for img in self._images]
+
+        images = []
+        for img in self._images:
+            image = PIL.Image.new('RGB', (self.width, self.height), 'white')
+            image.paste(img, box=(0,0))
+            print(image.size)
+            images.append(numpy.asarray(image))
+
         imageio.mimsave(save_path, images, duration=speed)
         self.reset()
 
