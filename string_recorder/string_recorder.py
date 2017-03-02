@@ -20,8 +20,10 @@ def get_font(bold=False):
         os.path.dirname(__file__), '../fonts', font_name)
     if bold:
         font_path = font_path.replace('Normal', 'Bold')
+
     if not os.path.exists(font_path):
         raise RuntimeError('run `./fonts/install.sh` first')
+
     return font_path
 
 
