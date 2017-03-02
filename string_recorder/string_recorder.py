@@ -1,162 +1,145 @@
-import io
 import json
+import os
 import re
-import shutil
-import subprocess
-import sys
-import tempfile
+
+import imageio
+import numpy
+import PIL.Image
+import PIL.ImageColor
+import PIL.ImageDraw
+import PIL.ImageFont
 
 
 colors = ['gray', 'red', 'green', 'yellow',
           'blue', 'magenta', 'cyan', 'white', 'crimson']
 
 
-reset_code = '\u001b[0m'
-
-
-def get_font():
-    if sys.platform in ['linux', 'linux2']:
-        return 'Courier'
-    elif sys.platform == "darwin":
-        return 'Consolas'
-
-
-def colorcode2pango(matchobj):
-    reg_nest = re.compile('\u001b\[(?P<color>[0-9]+?)m(?P<content>.+?)')
-
-    color = matchobj.groupdict()['color'].split(';')
-    meta = '<span'
-    bold = False
-    if len(color) != 1:
-        bold = True
-    color = color[0]
-    if color[0] == '3':
-        meta += ' foreground="{}"'.format(colors[int(color[1])])
-    elif color[0] == '4':
-        meta += ' background="{}"'.format(colors[int(color[1])])
-
-    content = matchobj.groupdict()['content']
-    if content.startswith('\u001B'):
-        color, content = reg_nest.findall(content)[0]
-
-        color = color.split(';')
-        if len(color) != 1:
-            bold = True
-        color = color[0]
-
-        if color[0] == '3':
-            meta += ' foreground="{}"'.format(colors[int(color[1])])
-        elif color[0] == '4':
-            meta += ' background="{}"'.format(colors[int(color[1])])
-
+def get_font(bold=False):
+    font_name = 'source-han-code-jp-2.000R/OTF/SourceHanCodeJP-Normal.otf'
+    font_path = os.path.join(
+        os.path.dirname(__file__), '../fonts', font_name)
     if bold:
-        content = '<b>{}</b>'.format(content)
-    out = '{}>{}</span>'.format(meta, content)
-    return out
+        font_path = font_path.replace('Normal', 'Bold')
+
+    if not os.path.exists(font_path):
+        raise RuntimeError('run `./fonts/install.sh` first')
+
+    return font_path
 
 
 class StringRecorder(object):
 
-    def __init__(self, font=None, max_frames=100000):
-        self.tmp_dir = tempfile.mkdtemp()
+    def __init__(self, font=None, bold_font=None, max_frames=100000):
         self.max_frames = max_frames
         if font is None:
             font = get_font()
-        self.font = font
-        self.__frame_t = 0
+            bold_font = get_font(bold=True)
+        self.font = PIL.ImageFont.truetype(font)
+        self.bold_font = PIL.ImageFont.truetype(bold_font)
         self.height = -1
         self.width = -1
 
-    def __del__(self):
-        self._delete_tmp_dir()
+        self.tmpdraw = PIL.ImageDraw.Draw(PIL.Image.new('RGB', (1, 1)))
+        self._images = []
+        self._sizes = []
+        self._spacing = 0
 
-    def _delete_tmp_dir(self):
-        shutil.rmtree(self.tmp_dir)
-        self.tmp_dir = None
+        self._step = 0
+
+        self.reg1 = re.compile(
+            '((?:\u001b\[[0-9;]+?m){0,2}.+?(?:\u001b\[0m){0,2})')
+        self.reg2 = re.compile(
+            '((?:\u001b\[[0-9;]+?m){0,2})(.+?)(?:\u001b\[0m){0,2}')
+        self.bg_reg = re.compile('\u001b\[(4[0-9;]+?)m')
+        self.fg_reg = re.compile('\u001b\[(3[0-9;]+?)m')
 
     def reset(self):
-        self._delete_tmp_dir()
-        self.tmp_dir = tempfile.mkdtemp()
-        self.__frame_t = 0
         self.height = -1
         self.width = -1
+        self._images = []
+        self._sizes = []
+        self._step = 0
+
+    def render(self, frame):
+
+        splitted = [[w for w in self.reg1.split(l) if w != '']
+                    for l in frame.split('\n')]
+        parsed = [[self.reg2.findall(c) for c in l] for l in splitted]
+
+        frame = '\n'.join([''.join(c[0][1] for c in l) for l in parsed])
+
+        d = {}
+        for y, row in enumerate(parsed):
+            for x, col in enumerate(row):
+                if col[0][0] == '':
+                    continue
+                d[(y, x)] = col[0][0]
+
+        size = self.tmpdraw.textsize(frame, self.font, spacing=self._spacing)
+        image = PIL.Image.new('RGB', size, (255, 255, 255))
+        draw = PIL.ImageDraw.Draw(image, mode='RGB')
+
+        cw, ch = self.tmpdraw.textsize('A', self.font, spacing=self._spacing)
+
+        # TODO(kikuchi): refactoring
+        for k, v in d.items():
+            y, x = k
+            background = self.bg_reg.findall(v)
+
+            if background != []:
+                assert background[0][0] == '4'
+                color = PIL.ImageColor.getrgb(colors[int(background[0][1])])
+                draw.rectangle((cw * x, ch * y, cw * (x + 1), ch * (y + 1)),
+                               fill=color)
+
+        draw.text((0, 0), frame, font=self.font, fill=0, spacing=self._spacing)
+
+        for k, v in d.items():
+            y, x = k
+            foreground = self.fg_reg.findall(v)
+
+            if foreground != []:
+                assert foreground[0][0] == '3'
+                color = PIL.ImageColor.getrgb(colors[int(foreground[0][1])])
+                char = parsed[y][x][0][1]
+
+                font = self.font
+                if foreground[0].endswith(';1'):
+                    font = self.bold_font
+                draw.text((cw * x, ch * y), char, font=font, fill=color,
+                          spacing=self._spacing)
+
+        return image, size
 
     def record_frame(self, frame, speed=None):
         assert type(frame) == str
 
-        output = io.StringIO()
-        output.write(frame)
-
-        lines = frame.strip().split('\n')
-        width = max([len(l) for l in lines])
-        height = len(lines)
-
-        record_path = '{}/{:09d}.png'.format(self.tmp_dir, self.frame_t)
-
+        image, (width, height) = self.render(frame=frame)
+        self._images.append(image)
         if self.width < width:
             self.width = width
-            self.width_file = record_path
         if self.height < height:
             self.height = height
-            self.height_file = record_path
-
-        command = ['convert',
-                   '-font',
-                   '{}'.format(self.font),
-                   'pango:{}'.format(output.getvalue()),
-                   record_path]
-
-        with subprocess.Popen(command) as proc:
-            proc.wait()
-
-        if self.frame_t > 0 and self.frame_t % self.max_frames == 0:
-            # if the number of frames are too large.
-            tmp = self.frame_t
-            self.make_gif('frm{:09d}_{:09d}.gif'.format(
-                self.frame_t - self.max_frames, self.frame_t - 1))
-            self.__frame_t = tmp
-
-        self.__frame_t += 1
-
-    def get_max_size(self):
-
-        def get(w_or_h, record_path):
-            command = ['identify',
-                       '-format',
-                       '%[fx:{}]'.format(w_or_h),
-                       record_path]
-            proc = subprocess.Popen(command, stdout=subprocess.PIPE)
-            return proc.stdout.read().decode('utf8')
-
-        w = get('w', self.width_file)
-        h = get('h', self.height_file)
-        return w, h
+        self._step += 1
 
     def make_gif(self, save_path, speed=0.3):
         if not save_path.endswith('.gif'):
             save_path += '.gif'
 
-        w, h = self.get_max_size()
+        images = []
+        for img in self._images:
+            image = PIL.Image.new('RGB', (self.width, self.height), 'white')
+            image.paste(img, box=(0,0))
+            print(image.size)
+            images.append(numpy.asarray(image))
 
-        command = ['convert',
-                   '-background',
-                   'white',
-                   '-delay',
-                   '{}'.format(int(speed * 100)),
-                   '-extent',
-                   '{}x{}'.format(w, h),
-                   '{}/*.png'.format(self.tmp_dir),
-                   save_path]
-
-        with subprocess.Popen(command) as proc:
-            proc.wait()
-            self.reset()
+        imageio.mimsave(save_path, images, duration=speed)
+        self.reset()
 
     def make_gif_from_gym_record(self, json_path):
         """convert OpenAI gym's text based video (i.e. ansi mode) to GIF
 
         """
-
         with open(json_path) as f:
             record = json.load(f)
 
@@ -164,18 +147,13 @@ class StringRecorder(object):
             raise RuntimeError(
                 'Only data from TextEncoder of OpenAI gym is supported.')
 
-        reg_color = re.compile(
-            '\u001b\[(?P<color>[0-9;]+?)m(?P<content>.+?)\u001b\[0m')
-
         for duration, frame in record['stdout']:
             frame = frame.replace('\u001b[2J\u001b[1;1H', '')
             frame = frame.replace('\r', '')
-            frame = reg_color.sub(colorcode2pango, frame)
-            frame = frame.replace(reset_code, '')
             self.record_frame(frame)
 
         self.make_gif(json_path.replace('.json', '.gif'))
 
     @property
-    def frame_t(self):
-        return self.__frame_t
+    def step(self):
+        return self._step
