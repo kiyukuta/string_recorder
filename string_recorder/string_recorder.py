@@ -65,10 +65,13 @@ class StringRecorder(object):
         parsed = [[self.reg2.findall(c) for c in l] for l in splitted]
 
         frame = '\n'.join([''.join(c[0][1] for c in l) for l in parsed])
+
         d = {}
-        [[d.update({(row, col): c[0][0]})
-          for col, c in enumerate(l) if c[0][0] != ''] for row, l
-                                                       in enumerate(parsed)]
+        for y, row in enumerate(parsed):
+            for x, col in enumerate(row):
+                if col[0][0] == '':
+                    continue
+                d[(y, x)] = col[0][0]
 
         size = self.tmpdraw.textsize(frame, self.font, spacing=self._spacing)
         image = PIL.Image.new('RGB', size, (255, 255, 255))
