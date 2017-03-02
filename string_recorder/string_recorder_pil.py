@@ -1,13 +1,16 @@
 import io
 import json
 import os
-import PIL
-from PIL import ImageFont, ImageDraw, Image, ImageColor
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+
+import imageio
+import numpy
+import PIL
+from PIL import ImageFont, ImageDraw, Image, ImageColor
 
 
 colors = ['gray', 'red', 'green', 'yellow',
@@ -45,6 +48,8 @@ class StringRecorder(object):
         self._sizes = []
         self._spacing = 0
 
+        self._step = 0
+
         self.reg1 = re.compile(
             '((?:\u001b\[[0-9;]+?m){0,2}.+?(?:\u001b\[0m){0,2})')
         self.reg2 = re.compile(
@@ -67,6 +72,7 @@ class StringRecorder(object):
         self.width = -1
         self._images = []
         self._sizes = []
+        self._step = 0
 
     def render(self, frame):
 
@@ -81,8 +87,8 @@ class StringRecorder(object):
                                                        in enumerate(parsed)]
 
         size = self.tmpdraw.textsize(frame, self.font, spacing=self._spacing)
-        image = Image.new('RGBA', size, (255,255,255,0))
-        draw = ImageDraw.Draw(image, mode='RGBA')
+        image = Image.new('RGB', size, (255,255,255))
+        draw = ImageDraw.Draw(image, mode='RGB')
 
         cw, ch = self.tmpdraw.textsize('A', self.font, spacing=self._spacing)
 
@@ -92,12 +98,12 @@ class StringRecorder(object):
 
             if background != []:
                 assert background[0][0] == '4'
-                color = ImageColor.getrgb(colors[int(background[0][1])]) + (0,)
+                color = ImageColor.getrgb(colors[int(background[0][1])])
                 draw.rectangle((cw * x, ch * y, cw * (x + 1), ch * (y  + 1)),
                                fill=color)
-                data = image.load()
-                if data[cw * x, ch * y] == (0,0,0,0):
-                    raise
+                #data = image.load()
+                #print(data[cw * x, ch * y])
+                #print(data[cw * x - 1, ch * y - 1])
 
         draw.text((0, 0), frame, font=self.font, fill=0, spacing=self._spacing)
 
@@ -108,7 +114,7 @@ class StringRecorder(object):
 
             if foreground != []:
                 assert foreground[0][0] == '3'
-                color = ImageColor.getrgb(colors[int(foreground[0][1])]) + (0,)
+                color = ImageColor.getrgb(colors[int(foreground[0][1])])
                 char = parsed[y][x][0][1]
 
                 font = self.font
@@ -122,27 +128,24 @@ class StringRecorder(object):
     def record_frame(self, frame, speed=None):
         assert type(frame) == str
 
+        #frame = '{}\n'.format(self.step) + frame
         image, (width, height) = self.render(frame=frame)
+        image.save('step{}.png'.format(self.step))
 
         self._images.append(image)
         if self.width < width:
             self.width = width
         if self.height < height:
             self.height = height
+        self._step += 1
+        return image
 
-    def make_gif(self, save_path, speed=0.3):
+    def make_gif(self, images, save_path, speed=0.3):
         if not save_path.endswith('.gif'):
             save_path += '.gif'
         size = (self.width, self.height)
-        gif = Image.new('RGBA', size, (255, 255, 255))
-        images = []
-        for img in self._images:
-            image = Image.new('RGBA', size, (255, 255, 255))
-            image.paste(img, box=(0, 0))
-            images.append(image)
-
-        gif.save(save_path, save_all=True,
-                 append_images=images, duration=speed * 1000)
+        gif = Image.new('RGB', size, (255, 255, 255))
+        imageio.mimsave(save_path, images, duration=speed)
         self.reset()
 
     def make_gif_from_gym_record(self, json_path):
@@ -160,9 +163,15 @@ class StringRecorder(object):
         reg_color = re.compile(
             '\u001b\[(?P<color>[0-9;]+?)m(?P<content>.+?)\u001b\[0m')
 
+        images = []
         for duration, frame in record['stdout']:
             frame = frame.replace('\u001b[2J\u001b[1;1H', '')
             frame = frame.replace('\r', '')
-            self.record_frame(frame)
+            image = self.record_frame(frame)
+            images.append(numpy.asarray(image))
 
-        self.make_gif(json_path.replace('.json', '.gif'))
+        self.make_gif(images, json_path.replace('.json', '.gif'))
+
+    @property
+    def step(self):
+        return self._step
