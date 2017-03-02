@@ -1,1 +1,1 @@
-from string_recorder.string_recorder import StringRecorder
+from string_recorder.string_recorder_pil import StringRecorder
