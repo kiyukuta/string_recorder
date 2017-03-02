@@ -143,6 +143,7 @@ class StringRecorder(object):
 
         gif.save(save_path, save_all=True,
                  append_images=images, duration=speed * 1000)
+        self.reset()
 
     def make_gif_from_gym_record(self, json_path):
         """convert OpenAI gym's text based video (i.e. ansi mode) to GIF
