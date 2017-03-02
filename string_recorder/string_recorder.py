@@ -1,24 +1,23 @@
 import json
 import os
 import re
-import shutil
 
 import imageio
 import numpy
-import PIL
-from PIL import ImageDraw, Image, ImageColor
+import PIL.Image
+import PIL.ImageColor
+import PIL.ImageDraw
+import PIL.ImageFont
 
 
 colors = ['gray', 'red', 'green', 'yellow',
           'blue', 'magenta', 'cyan', 'white', 'crimson']
 
 
-reset_code = '\u001b[0m'
-
-
 def get_font(bold=False):
-    font_path = os.path.join(os.path.dirname(__file__), '../fonts',
-        'source-han-code-jp-2.000R/OTF/SourceHanCodeJP-Normal.otf')
+    font_name = 'source-han-code-jp-2.000R/OTF/SourceHanCodeJP-Normal.otf'
+    font_path = os.path.join(
+        os.path.dirname(__file__), '../fonts', font_name)
     if bold:
         font_path = font_path.replace('Normal', 'Bold')
     if not os.path.exists(font_path):
@@ -38,7 +37,7 @@ class StringRecorder(object):
         self.height = -1
         self.width = -1
 
-        self.tmpdraw = ImageDraw.Draw(Image.new('RGB', (1, 1)))
+        self.tmpdraw = PIL.ImageDraw.Draw(PIL.Image.new('RGB', (1, 1)))
         self._images = []
         self._sizes = []
         self._spacing = 0
@@ -72,34 +71,31 @@ class StringRecorder(object):
                                                        in enumerate(parsed)]
 
         size = self.tmpdraw.textsize(frame, self.font, spacing=self._spacing)
-        image = Image.new('RGB', size, (255,255,255))
-        draw = ImageDraw.Draw(image, mode='RGB')
+        image = PIL.Image.new('RGB', size, (255, 255, 255))
+        draw = PIL.ImageDraw.Draw(image, mode='RGB')
 
         cw, ch = self.tmpdraw.textsize('A', self.font, spacing=self._spacing)
 
+        # TODO(kikuchi): refactoring
         for k, v in d.items():
             y, x = k
             background = self.bg_reg.findall(v)
 
             if background != []:
                 assert background[0][0] == '4'
-                color = ImageColor.getrgb(colors[int(background[0][1])])
-                draw.rectangle((cw * x, ch * y, cw * (x + 1), ch * (y  + 1)),
+                color = PIL.ImageColor.getrgb(colors[int(background[0][1])])
+                draw.rectangle((cw * x, ch * y, cw * (x + 1), ch * (y + 1)),
                                fill=color)
-                #data = image.load()
-                #print(data[cw * x, ch * y])
-                #print(data[cw * x - 1, ch * y - 1])
 
         draw.text((0, 0), frame, font=self.font, fill=0, spacing=self._spacing)
 
         for k, v in d.items():
             y, x = k
             foreground = self.fg_reg.findall(v)
-            bold = False
 
             if foreground != []:
                 assert foreground[0][0] == '3'
-                color = ImageColor.getrgb(colors[int(foreground[0][1])])
+                color = PIL.ImageColor.getrgb(colors[int(foreground[0][1])])
                 char = parsed[y][x][0][1]
 
                 font = self.font
@@ -113,7 +109,6 @@ class StringRecorder(object):
     def record_frame(self, frame, speed=None):
         assert type(frame) == str
 
-        #frame = '{}\n'.format(self.step) + frame
         image, (width, height) = self.render(frame=frame)
         image.save('step{}.png'.format(self.step))
 
@@ -123,13 +118,11 @@ class StringRecorder(object):
         if self.height < height:
             self.height = height
         self._step += 1
-        return image
 
-    def make_gif(self, images, save_path, speed=0.3):
+    def make_gif(self, save_path, speed=0.3):
         if not save_path.endswith('.gif'):
             save_path += '.gif'
-        size = (self.width, self.height)
-        gif = Image.new('RGB', size, (255, 255, 255))
+        images = [numpy.asarray(img) for img in self._images]
         imageio.mimsave(save_path, images, duration=speed)
         self.reset()
 
@@ -137,7 +130,6 @@ class StringRecorder(object):
         """convert OpenAI gym's text based video (i.e. ansi mode) to GIF
 
         """
-
         with open(json_path) as f:
             record = json.load(f)
 
@@ -145,17 +137,12 @@ class StringRecorder(object):
             raise RuntimeError(
                 'Only data from TextEncoder of OpenAI gym is supported.')
 
-        reg_color = re.compile(
-            '\u001b\[(?P<color>[0-9;]+?)m(?P<content>.+?)\u001b\[0m')
-
-        images = []
         for duration, frame in record['stdout']:
             frame = frame.replace('\u001b[2J\u001b[1;1H', '')
             frame = frame.replace('\r', '')
-            image = self.record_frame(frame)
-            images.append(numpy.asarray(image))
+            self.record_frame(frame)
 
-        self.make_gif(images, json_path.replace('.json', '.gif'))
+        self.make_gif(json_path.replace('.json', '.gif'))
 
     @property
     def step(self):
