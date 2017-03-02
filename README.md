@@ -12,13 +12,14 @@ create GIF animation from sequence of `str` in python .
 
 For example, Run this code (examples/example.py):
 ```python
-import string_recorder
 import random
-rec = string_recorder.StrRecorder()
+import string_recorder
+
+
+rec = string_recorder.StringRecorder()
 for i in range(10):
     x = random.randint(0, 5)
-    frame = '{}{}\n{}'.format(i, '>' * x, 'v\n' * x)
-    rec.record_frame(frame)
+    rec.record_frame('{}{}\n{}'.format(i, '>' * x, 'v\n' * x))
 rec.make_gif('test.gif')
 ```
 
@@ -34,7 +35,6 @@ only text-based environment is allowed.
 
 ```python
 import subprocess
-import re
 
 import gym
 from gym.monitoring import VideoRecorder
@@ -43,9 +43,9 @@ import string_recorder
 
 
 env = gym.make('Taxi-v2')
-rec = string_recorder.StringRecorder(font='Consolas')   #  <---
+rec = string_recorder.StringRecorder()  # <---
 
-#timestep_limit = env.spec.tags.get(
+# timestep_limit = env.spec.tags.get(
 #        'wrapper_config.TimeLimit.max_episode_steps')
 timestep_limit = 15
 
