@@ -1,3 +1,14 @@
+"""
+This is deprecated version which uses ImageMagick instead of PIL.
+The requirements for this are Pango, FreeType and ImageMagick.
+
+To make good GIF, we have to specify monospaced font in initializer
+(`StringReorder.__init__`).
+
+I found **Courier** for Linux and **Consolas** for Mac are monospaced.
+`StringRecorder` will use one of these fonts (according to your OS)
+if no font is specified in initializer.
+"""
 import io
 import json
 import re
