@@ -55,7 +55,9 @@ def colorcode2pango(matchobj):
     return out
 
 
-class StringRecorder(object):
+class StringRecorderIm(object):
+    """StringRecorder using ImageMagick
+    """
 
     def __init__(self, font=None, max_frames=100000):
         self.tmp_dir = tempfile.mkdtemp()
