@@ -4,7 +4,7 @@ create GIF animation from sequence of `str` in python .
 
 ## Requirements
 - numpy
-- PIL
+- pillow
 - imageio
 
 
@@ -68,7 +68,7 @@ for e in range(3):
 ```
 
 By running above code (`examples/example_gym.py`), 
-you will obtain three GIF in `records` directory
+you will obtain three GIFs in `records` directory
 (episode0.gif, episode1.gif, and episode2.gif) .  
 
 ![episode0](examples/records/episode0.gif)
@@ -76,7 +76,7 @@ you will obtain three GIF in `records` directory
 
 Ofcource, you can directly use `string_recorder` without
 `gym.monitering.VideoRecorder` (like the first example):
-```
+```python
 rec = string_recorder.StringRecorder()
 # loop
 for t in range(timestep_limit):
