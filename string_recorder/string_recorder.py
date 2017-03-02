@@ -113,8 +113,6 @@ class StringRecorder(object):
         assert type(frame) == str
 
         image, (width, height) = self.render(frame=frame)
-        image.save('step{}.png'.format(self.step))
-
         self._images.append(image)
         if self.width < width:
             self.width = width
