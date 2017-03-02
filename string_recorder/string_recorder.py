@@ -1,16 +1,12 @@
-import io
 import json
 import os
 import re
 import shutil
-import subprocess
-import sys
-import tempfile
 
 import imageio
 import numpy
 import PIL
-from PIL import ImageFont, ImageDraw, Image, ImageColor
+from PIL import ImageDraw, Image, ImageColor
 
 
 colors = ['gray', 'red', 'green', 'yellow',
@@ -33,7 +29,6 @@ def get_font(bold=False):
 class StringRecorder(object):
 
     def __init__(self, font=None, bold_font=None, max_frames=100000):
-        self.tmp_dir = tempfile.mkdtemp()
         self.max_frames = max_frames
         if font is None:
             font = get_font()
@@ -56,16 +51,6 @@ class StringRecorder(object):
             '((?:\u001b\[[0-9;]+?m){0,2})(.+?)(?:\u001b\[0m){0,2}')
         self.bg_reg = re.compile('\u001b\[(4[0-9;]+?)m')
         self.fg_reg = re.compile('\u001b\[(3[0-9;]+?)m')
-
-    def __del__(self):
-        self._delete_tmp_dir()
-
-    def _delete_tmp_dir(self):
-        try:
-            shutil.rmtree(self.tmp_dir)
-        except:
-            pass
-        self.tmp_dir = None
 
     def reset(self):
         self.height = -1
