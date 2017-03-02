@@ -130,7 +130,6 @@ class StringRecorder(object):
         for img in self._images:
             image = PIL.Image.new('RGB', (self.width, self.height), 'white')
             image.paste(img, box=(0,0))
-            print(image.size)
             images.append(numpy.asarray(image))
 
         imageio.mimsave(save_path, images, duration=speed)
