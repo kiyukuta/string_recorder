@@ -35,7 +35,7 @@ class StringRecorder(object):
             font = get_font()
             bold_font = get_font(bold=True)
         self.font = PIL.ImageFont.truetype(font)
-        self.bold_font = PIL.ImageFont.truetype(bold_font)
+        self.bold_font = PIL.ImageFont.truetype(bold_font or font)
         self.height = -1
         self.width = -1
 
