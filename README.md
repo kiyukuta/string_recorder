@@ -86,3 +86,11 @@ for t in range(timestep_limit):
 
 rec.make_gif('gym_without_videorecoder.gif')
 ```
+
+### Ascii Art
+
+AAアニメも作れるよ！(`examples/example_aa.py`)
+
+![aa](examples/aa1.gif)
+
+![aa](examples/aa2.gif)
