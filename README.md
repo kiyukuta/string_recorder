@@ -1,5 +1,5 @@
 # StringRecorder
-create GIF animation from sequence of `str` in python .
+create GIF animation from sequence of `str` of python.
 
 
 ## Requirements
@@ -29,7 +29,7 @@ And you will obtain this GIF:
 
 ### Connecting with OpenAI Gym.
 
-You can also use `string_recorder` for the recrod from OpenAI gym.  
+You can also use `string_recorder` for the record of OpenAI gym.  
 Note that the record must be done with `ansi` mode, i.e., 
 only text-based environment is allowed.
 
