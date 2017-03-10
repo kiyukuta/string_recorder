@@ -1,6 +1,9 @@
 # StringRecorder
-create GIF animation from sequence of `str` of python.
 
+StringRecorder is a Python package for programatically creating animated GIFs
+from string objects in Python scripts.  The package provides the APIs for
+recording the string data and writing the recorded data to an animated GIF
+file.
 
 ## Requirements
 - numpy
@@ -10,7 +13,18 @@ create GIF animation from sequence of `str` of python.
 
 ## Usage
 
-For example, Run this code (examples/example.py):
+First, you need to import the module `string_recorder`.
+
+```python
+>>> import string_recoder
+```
+
+The module defines the class, `StringRecorder`. The class provides the methods
+for recording and creating animated GIF files.
+
+Here is an example of how to record and create an animated GIF (the code
+is avaiable at `examples/example.py`):
+
 ```python
 import random
 import string_recorder
@@ -23,7 +37,11 @@ for i in range(10):
 rec.make_gif('test.gif')
 ```
 
-And you will obtain this GIF:  
+In the example, the data is recorded using the `record_frame` method
+and an animated GIF file is created using the `make_gif` method.
+
+Running the script will produce the following GIF:
+
 ![test](examples/test.gif)
 
 
@@ -67,15 +85,15 @@ for e in range(3):
     rec.make_gif_from_gym_record(out_path)  # <---
 ```
 
-By running above code (`examples/example_gym.py`), 
+By running the above code (`examples/example_gym.py`),
 you will obtain three GIFs in `records` directory
 (episode0.gif, episode1.gif, and episode2.gif) .  
 
 ![episode0](examples/records/episode0.gif)
 
 
-Ofcource, you can directly use `string_recorder` without
-`gym.monitering.VideoRecorder` (like the first example):
+You can directly use `string_recorder` without
+`gym.monitering.VideoRecorder` as well (like the first example):
 ```python
 rec = string_recorder.StringRecorder()
 # loop
